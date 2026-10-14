@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0c0907">
+<title>StreakMaster</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0907;
+    --card: #23170f;
+    --text: #f6efe6;
+    --muted: #cbbbaa;
+    --line: rgba(255, 220, 180, .16);
+    --accent: #ff7a2f;
+    --accent-2: #ffc14a;
+    --ink: #1a0d07;
+  }
+  body[data-theme="bosque"] { --accent: #8dce6a; --accent-2: #d7f5a8; }
+  body[data-theme="mar"] { --accent: #79c0ff; --accent-2: #c7f4ff; }
+  body[data-theme="vino"] { --accent: #ff6b8a; --accent-2: #ffd0dc; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100dvh;
+    font-family: Outfit, system-ui, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 50% -10%, rgba(255, 122, 47, .2), transparent 55%),
+      var(--bg);
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .app {
+    width: min(440px, 100%);
+    min-height: 100dvh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: calc(14px + env(safe-area-inset-top)) 16px 0;
+  }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: -.02em; }
+  .brand svg { width: 22px; height: 22px; color: var(--accent); }
+  .coin-pill, .primary, .ghost, .add, .pack, .choice, .emoji, .check, nav button {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .coin-pill {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .04);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  main { flex: 1; padding: 18px 0 12px; }
+  .kicker { margin: 0; color: var(--muted); font-size: 14px; }
+  h1, h2, h3 { font-family: Fraunces, Georgia, serif; font-weight: 560; letter-spacing: -.03em; }
+  h1 { margin: 4px 0; font-size: 34px; line-height: 1; }
+  h2 { margin: 22px 0 10px; font-size: 26px; }
+  h3 { margin: 0 0 8px; font-size: 22px; }
+  .hero {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 14px;
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255, 122, 47, .14), rgba(255, 255, 255, .03));
+  }
+  .ring-wrap { position: relative; width: 112px; height: 112px; }
+  .ring { width: 112px; height: 112px; display: block; }
+  .ring .track { fill: none; stroke: rgba(255, 255, 255, .1); stroke-width: 8; }
+  .ring .bar {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 60px 60px;
+  }
+  .ring-num {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-family: Fraunces, Georgia, serif;
+    font-size: 38px;
+    font-variant-numeric: tabular-nums;
+  }
+  .note, .meta, .help { color: var(--muted); line-height: 1.45; }
+  .note { margin: 0; }
+  .meta { margin: 8px 0 0; font-size: 14px; }
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 16px 0; }
+  .dot { text-align: center; color: var(--muted); font-size: 12px; font-weight: 600; }
+  .dot i, .swatch {
+    display: block;
+    width: 10px;
+    height: 10px;
+    margin: 6px auto 0;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .12);
+  }
+  .dot.on i { background: var(--accent-2); }
+  .dot.today { color: var(--text); }
+  .progress-line { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
+  .habit, .card, .stat {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+  }
+  .habit { display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px; }
+  .habit .emoji { font-size: 24px; width: 36px; text-align: center; }
+  .habit .name { font-weight: 650; }
+  .habit .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .habit .grow { flex: 1; min-width: 0; }
+  .check, .icon-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: transparent;
+    font-size: 20px;
+    flex: none;
+  }
+  .check.on { background: var(--accent); color: var(--ink); border-color: transparent; }
+  .icon-btn { width: 38px; height: 38px; color: var(--muted); font-size: 18px; }
+  .add, .primary, .ghost {
+    width: 100%;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-weight: 700;
+  }
+  .add, .ghost { margin-top: 8px; background: transparent; border: 1px dashed var(--line); }
+  .primary { border: 0; background: var(--accent); color: var(--ink); }
+  .ghost { border-style: solid; }
+  .card { padding: 14px; margin-bottom: 10px; }
+  .card p { margin: 6px 0 12px; }
+  .row { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .packs { display: grid; gap: 8px; }
+  .pack, .choice {
+    text-align: left;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(0, 0, 0, .18);
+    padding: 12px;
+  }
+  .pack strong, .choice strong { display: block; }
+  .pack span, .choice span, .price { color: var(--muted); font-size: 13px; }
+  .choice.on { border-color: var(--accent); }
+  .themes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { padding: 12px; }
+  .stat b { display: block; font-family: Fraunces, Georgia, serif; font-size: 28px; font-weight: 560; }
+  label { display: block; font-size: 14px; margin: 12px 0; }
+  input, select {
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #120d0a;
+  }
+  .emojis { display: flex; flex-wrap: wrap; gap: 6px; }
+  .emoji-btn {
+    width: 42px; height: 42px; border-radius: 12px;
+    border: 1px solid var(--line); background: transparent; font-size: 20px;
+  }
+  .emoji-btn.on { border-color: var(--accent); background: rgba(255, 122, 47, .15); }
+  .empty { padding: 8px 0 4px; color: var(--muted); }
+  .done-banner {
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(141, 206, 106, .15);
+    color: #d7f5a8;
+    font-weight: 650;
+  }
+  nav {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 8px 0 calc(10px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(12, 9, 7, 0), var(--bg) 28%);
+  }
+  nav button { border: 0; background: transparent; color: var(--muted); font-weight: 700; padding: 10px 4px; }
+  nav button.on { color: var(--text); }
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(86px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(8px);
+    max-width: calc(100% - 32px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 40;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px 10px 14px;
+    border-radius: 999px;
+    background: #f6efe6;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
+  #toast button { border: 0; border-radius: 999px; background: var(--ink); color: #f6efe6; padding: 6px 10px; font-weight: 700; }
+  #modal[hidden] { display: none; }
+  #modal {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    background: rgba(0, 0, 0, .62);
+    display: grid;
+    align-items: end;
+    justify-content: center;
+  }
+  .sheet {
+    width: min(440px, 100%);
+    max-height: min(88dvh, 720px);
+    overflow: auto;
+    background: #1b120c;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 22px 22px 0 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  .danger { background: transparent; color: #ffb4b4; border: 0; padding: 12px 0; font-weight: 700; }
+  @media (min-width: 760px) {
+    #modal { align-items: center; }
+    .sheet { border-bottom: 1px solid var(--line); border-radius: 22px; margin-bottom: 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body data-theme="ember">
+<div class="app">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c1 3 0 4-1 6 2-1 4-1 5 1 2 2 3 5 3 8a7 7 0 1 1-14 0c0-3 2-6 4-8 0 2 2 3 3 3 0-4 0-8 0-10z"/></svg>
+      StreakMaster
+    </div>
+    <button type="button" class="coin-pill" data-action="go" data-screen="tienda">🔥 <span id="coin-count">0</span></button>
+  </header>
+  <main id="view"></main>
+  <nav>
+    <button type="button" data-action="go" data-screen="hoy">Hoy</button>
+    <button type="button" data-action="go" data-screen="tienda">Tienda</button>
+    <button type="button" data-action="go" data-screen="yo">Yo</button>
+  </nav>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="modal" hidden></div>
+<noscript><p style="padding:24px">StreakMaster necesita JavaScript.</p></noscript>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // Rachas y monedas viven en el teléfono.
+  // Si Telegram deja usar CloudStorage, se hace una copia en la cuenta.
+  // Las Stars se cobran en servidor. Las monedas se suman cuando Telegram dice "paid".
+  // El anuncio real solo da monedas si Monetag responde reward_event_type = valued.
+
+  var CFG = Object.assign({
+    monetagScriptUrl: '',
+    monetagZoneId: '',
+    adReward: 40,
+    maxAdsPerDay: 5,
+    adCooldownMs: 60000
+  }, window.STREAK_CONFIG || {});
+
+  var AD_REWARD = Number(CFG.adReward) || 40;
+  var MAX_ADS = Number(CFG.maxAdsPerDay) || 5;
+  var AD_WAIT = Number(CFG.adCooldownMs) || 60000;
+  var SHIELD_COST = 80;
+  var SHIELD_MAX = 3;
+  var STORAGE_KEY = 'streakmaster.v1';
+  var MILESTONES = [7, 14, 21, 30, 66, 100];
+  var MILESTONE_BONUS = { 7: 25, 14: 40, 21: 70, 30: 100, 66: 160, 100: 250 };
+  var THEMES = [
+    { id: 'ember', name: 'Brasa', price: 0 },
+    { id: 'bosque', name: 'Bosque', price: 120 },
+    { id: 'mar', name: 'Mar', price: 120 },
+    { id: 'vino', name: 'Vino', price: 160 }
+  ];
+  var EMOJIS = ['✅', '💧', '📖', '🏋️', '🧘', '🥗', '🛏️', '🚶', '🧠', '✍️', '🧹', '🌿', '🎯', '☀️', '💊', '💰'];
+  var FALLBACK_PACKS = [
+    { sku: 'chispa', title: '100 monedas', stars: 15, coins: 100 },
+    { sku: 'llama', title: '500 monedas', stars: 59, coins: 500 },
+    { sku: 'hoguera', title: '1400 monedas', stars: 129, coins: 1400 }
+  ];
+
+  var tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+  var packs = FALLBACK_PACKS.slice();
+  var screen = 'hoy';
+  var state;
+  var draft = null;
+  var pendingUndo = null;
+  var toastTimer = 0;
+  var cloudReady = false;
+  var dirtyBeforeCloud = false;
+  var cloudTimer = 0;
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function uid() {
+    return Math.random().toString(36).slice(2, 8);
+  }
+
+  function dayKey(date) {
+    var d = date || new Date();
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + month + '-' + day;
+  }
+
+  function addDays(key, amount) {
+    var parts = key.split('-');
+    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    date.setDate(date.getDate() + amount);
+    return dayKey(date);
+  }
+
+  function blank() {
+    return {
+      v: 1,
+      updatedAt: 0,
+      name: '',
+      coins: 0,
+      earned: 0,
+      streak: 0,
+      best: 0,
+      last: '',
+      freezes: 0,
+      theme: 'ember',
+      owned: ['ember'],
+      habits: [],
+      log: {},
+      ads: {},
+      lastAdAt: 0,
+      milestones: [],
+      payments: []
+    };
+  }
+
+  function sanitize(data) {
+    var next = Object.assign(blank(), data || {});
+    if (!Array.isArray(next.habits)) next.habits = [];
+    var allowedRewards = [5, 10, 15, 20, 30];
+    next.habits = next.habits.filter(function (habit) {
+      return habit && habit.id && habit.name;
+    }).slice(0, 8).map(function (habit) {
+      var reward = Number(habit.reward);
+      return {
+        id: String(habit.id).replace(/[^a-z0-9]/gi, '').slice(0, 12) || uid(),
+        name: String(habit.name).slice(0, 32),
+        emoji: EMOJIS.indexOf(habit.emoji) !== -1 ? habit.emoji : '✅',
+        reward: allowedRewards.indexOf(reward) !== -1 ? reward : 10
+      };
+    });
+    if (!next.log || typeof next.log !== 'object') next.log = {};
+    if (!next.ads || typeof next.ads !== 'object') next.ads = {};
+    if (!Array.isArray(next.owned) || !next.owned.length) next.owned = ['ember'];
+    if (!Array.isArray(next.milestones)) next.milestones = [];
+    if (!Array.isArray(next.payments)) next.payments = [];
+    next.coins = Math.max(0, Number(next.coins) || 0);
+    next.earned = Math.max(0, Number(next.earned) || 0);
+    next.streak = Math.max(0, Number(next.streak) || 0);
+    next.best = Math.max(0, Number(next.best) || 0);
+    next.freezes = Math.max(0, Number(next.freezes) || 0);
+    if (!THEMES.some(function (theme) { return theme.id === next.theme; })) next.theme = 'ember';
+    return next;
+  }
+
+  function fresh() {
+    var created = blank();
+    created.habits = [
+      { id: uid(), name: 'Entrenar', emoji: '🏋️', reward: 20 },
+      { id: uid(), name: 'Beber agua', emoji: '💧', reward: 10 },
+      { id: uid(), name: 'Leer 20 minutos', emoji: '📖', reward: 15 }
+    ];
+    created.updatedAt = Date.now();
+    return created;
+  }
+
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return sanitize(JSON.parse(raw));
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function tap(kind) {
+    try {
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred(kind || 'light');
+    } catch (err) {}
+  }
+
+  function toast(message) {
+    var el = document.getElementById('toast');
+    el.replaceChildren();
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2400);
+  }
+
+  function consumeUndo() {
+    pendingUndo = null;
+    var el = document.getElementById('toast');
+    el.classList.remove('show');
+    clearTimeout(toastTimer);
+  }
+
+  function showUndo(message) {
+    var el = document.getElementById('toast');
+    el.replaceChildren();
+    var span = document.createElement('span');
+    span.textContent = message;
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Deshacer';
+    button.addEventListener('click', function (event) {
+      event.stopPropagation();
+      if (!pendingUndo || Date.now() > pendingUndo.until) return;
+      state = sanitize(JSON.parse(pendingUndo.before));
+      pendingUndo = null;
+      save();
+      render();
+      toast('Deshecho');
+    });
+    el.appendChild(span);
+    el.appendChild(button);
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.remove('show');
+      pendingUndo = null;
+    }, 8000);
+  }
+
+  function pushCloud() {
+    if (!tg || !tg.initData || !tg.CloudStorage) return;
+    var payload = JSON.stringify(state);
+    if (payload.length > 4000) {
+      var copy = JSON.parse(payload);
+      var limit = addDays(dayKey(), -30);
+      Object.keys(copy.log || {}).forEach(function (key) {
+        if (key < limit) delete copy.log[key];
+      });
+      payload = JSON.stringify(copy);
+    }
+    if (payload.length > 4000) return;
+    try {
+      tg.CloudStorage.setItem('streakmaster', payload, function () {});
+    } catch (err) {}
+  }
+
+  function save() {
+    state.updatedAt = Date.now();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (err) {}
+    if (!cloudReady) {
+      dirtyBeforeCloud = true;
+      return;
+    }
+    clearTimeout(cloudTimer);
+    cloudTimer = setTimeout(pushCloud, 350);
+  }
+
+  function cloudGet(key) {
+    return new Promise(function (resolve) {
+      if (!tg || !tg.initData || !tg.CloudStorage) return resolve(null);
+      try {
+        tg.CloudStorage.getItem(key, function (error, value) {
+          resolve(error || !value ? null : value);
+        });
+      } catch (err) {
+        resolve(null);
+      }
+    });
+  }
+
+  function pullCloud() {
+    cloudGet('streakmaster').then(function (remote) {
+      if (remote && !dirtyBeforeCloud) {
+        try {
+          var data = sanitize(JSON.parse(remote));
+          if ((data.updatedAt || 0) > (state.updatedAt || 0)) {
+            state = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            render();
+          } else if ((state.updatedAt || 0) > (data.updatedAt || 0)) {
+            pushCloud();
+          }
+        } catch (err) {}
+      }
+      cloudReady = true;
+      if (dirtyBeforeCloud) {
+        dirtyBeforeCloud = false;
+        pushCloud();
+      }
+    }).catch(function () {
+      cloudReady = true;
+    });
+  }
+
+  function trimState() {
+    var today = dayKey();
+    var logLimit = addDays(today, -90);
+    Object.keys(state.log).forEach(function (key) {
+      if (key < logLimit) delete state.log[key];
+    });
+    var adLimit = addDays(today, -8);
+    Object.keys(state.ads).forEach(function (key) {
+      if (key < adLimit) delete state.ads[key];
+    });
+    if (state.payments.length > 40) state.payments = state.payments.slice(-40);
+  }
+
+  function shownStreak() {
+    if (!state.last) return 0;
+    var today = dayKey();
+    if (state.last === today || state.last === addDays(today, -1)) return state.streak;
+    if (state.last === addDays(today, -2) && state.freezes > 0) return state.streak;
+    return 0;
+  }
+
+  function streakNote() {
+    var today = dayKey();
+    if (!state.last) return 'Marca un hábito y empieza la racha.';
+    if (state.last === today) return 'Hoy ya cuenta. Mañana toca volver.';
+    if (state.last === addDays(today, -1)) return 'Completa uno hoy para no romperla.';
+    if (state.last === addDays(today, -2) && state.freezes > 0) return 'Ayer fallaste. Hoy se gastará un escudo.';
+    return 'La racha se ha roto. Hoy puedes empezar otra.';
+  }
+
+  function nextMilestone(value) {
+    for (var i = 0; i < MILESTONES.length; i++) {
+      if (MILESTONES[i] > value) return MILESTONES[i];
+    }
+    return null;
+  }
+
+  function prevMilestone(value) {
+    var prev = 0;
+    for (var i = 0; i < MILESTONES.length; i++) {
+      if (MILESTONES[i] <= value) prev = MILESTONES[i];
+    }
+    return prev;
+  }
+
+  function goalLine(value) {
+    var next = nextMilestone(value);
+    if (!next) return 'Meta de 100 días cumplida';
+    var left = next - value;
+    return left === 1 ? 'Falta 1 día para los ' + next : 'Faltan ' + left + ' días para los ' + next;
+  }
+
+  function goalProgress(value) {
+    var next = nextMilestone(value);
+    if (!next) return 1;
+    var prev = prevMilestone(value);
+    return (value - prev) / (next - prev);
+  }
+
+  // La racha suma solo el primer hábito del día.
+  // Si ayer no entraste y tienes escudo, se gasta y la racha sigue.
+  // Si faltan dos días o más, hoy empieza en 1.
+  function commitDay() {
+    var today = dayKey();
+    if (state.last === today) return { bonus: 0, freeze: false };
+    var yesterday = addDays(today, -1);
+    var dayBefore = addDays(today, -2);
+    var freeze = false;
+    if (state.last === yesterday) state.streak += 1;
+    else if (state.last === dayBefore && state.freezes > 0) {
+      state.freezes -= 1;
+      state.streak += 1;
+      freeze = true;
+    } else state.streak = 1;
+    state.last = today;
+    if (state.streak > state.best) state.best = state.streak;
+    return { bonus: grantMilestones(), freeze: freeze };
+  }
+
+  function grantMilestones() {
+    var total = 0;
+    MILESTONES.forEach(function (milestone) {
+      if (state.streak >= milestone && state.milestones.indexOf(milestone) === -1) {
+        state.milestones.push(milestone);
+        var bonus = MILESTONE_BONUS[milestone];
+        state.coins += bonus;
+        state.earned += bonus;
+        total += bonus;
+      }
+    });
+    return total;
+  }
+
+  function ringSvg(progress) {
+    var length = 326.73;
+    var offset = length * (1 - Math.max(0, Math.min(1, progress)));
+    return '<svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="52"></circle><circle class="bar" cx="60" cy="60" r="52" stroke-dasharray="' + length.toFixed(2) + '" stroke-dashoffset="' + offset.toFixed(2) + '"></circle></svg>';
+  }
+
+  function weekHtml() {
+    var today = dayKey();
+    var date = new Date();
+    var mondayOffset = (date.getDay() + 6) % 7;
+    var monday = addDays(today, -mondayOffset);
+    var labels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    return labels.map(function (label, index) {
+      var key = addDays(monday, index);
+      var on = (state.log[key] || []).length > 0;
+      var cls = 'dot' + (on ? ' on' : '') + (key === today ? ' today' : '');
+      return '<div class="' + cls + '"><span>' + label + '</span><i></i></div>';
+    }).join('');
+  }
+
+  function screenHoy() {
+    var today = dayKey();
+    var shown = shownStreak();
+    var doneIds = state.log[today] || [];
+    var total = state.habits.length;
+    var doneCount = state.habits.filter(function (habit) {
+      return doneIds.indexOf(habit.id) !== -1;
+    }).length;
+    var hello = state.name ? 'Hola, ' + state.name : 'Hoy';
+    var shields = state.freezes ? ' · ' + state.freezes + (state.freezes === 1 ? ' escudo' : ' escudos') : '';
+    var banner = total && doneCount === total ? '<div class="done-banner">Día cerrado. Esto ya cuenta.</div>' : '';
+    var habits = state.habits.map(function (habit) {
+      var done = doneIds.indexOf(habit.id) !== -1;
+      return '<article class="habit"><div class="emoji" aria-hidden="true">' + habit.emoji + '</div><div class="grow"><div class="name">' + esc(habit.name) + '</div><div class="sub">+' + habit.reward + ' monedas</div></div><button type="button" class="icon-btn" data-action="open-edit" data-id="' + esc(habit.id) + '" aria-label="Editar ' + esc(habit.name) + '">✎</button><button type="button" class="check' + (done ? ' on' : '') + '" data-action="check" data-id="' + esc(habit.id) + '" aria-pressed="' + (done ? 'true' : 'false') + '" aria-label="Marcar ' + esc(habit.name) + '">' + (done ? '✓' : '') + '</button></article>';
+    }).join('');
+    if (!habits) {
+      habits = '<p class="empty">Todavía no tienes hábitos. Empieza por uno pequeño, de los que caben en un día ocupado.</p>';
+    }
+    return '<p class="kicker" id="hello">' + esc(hello) + '</p>' +
+      '<section class="hero"><div class="ring-wrap">' + ringSvg(goalProgress(shown)) + '<div class="ring-num">' + shown + '</div></div><div><h1>' + (shown === 0 ? 'Sin racha' : 'días seguidos') + '</h1><p class="note">' + esc(streakNote()) + '</p><p class="meta">' + esc(goalLine(shown)) + ' · Mejor: ' + state.best + shields + '</p></div></section>' +
+      '<div class="week" aria-hidden="true">' + weekHtml() + '</div>' +
+      banner +
+      '<div class="progress-line"><span>Hábitos de hoy</span><strong>' + doneCount + ' de ' + total + '</strong></div>' +
+      habits +
+      '<button type="button" class="add" data-action="open-add">Añadir hábito</button>';
+  }
+
+  function adLabel() {
+    var used = state.ads[dayKey()] || 0;
+    var zone = String(CFG.monetagZoneId || '').trim();
+    var real = Boolean(tg && tg.initData && zone);
+    var title = real ? 'Ver anuncio · +' + AD_REWARD + ' monedas' : 'Probar anuncio · +' + AD_REWARD + ' monedas';
+    return { title: title, used: used, real: real };
+  }
+
+  function screenShop() {
+    var ad = adLabel();
+    var packHtml = packs.map(function (pack) {
+      return '<button type="button" class="pack" data-action="buy-pack" data-sku="' + esc(pack.sku) + '"><strong>' + esc(pack.title) + '</strong><span>' + pack.stars + ' Stars</span></button>';
+    }).join('');
+    var themeHtml = THEMES.map(function (theme) {
+      var owned = state.owned.indexOf(theme.id) !== -1;
+      var label = state.theme === theme.id ? 'En uso' : (owned ? 'Usar' : theme.price + ' monedas');
+      return '<button type="button" class="choice' + (state.theme === theme.id ? ' on' : '') + '" data-action="buy-theme" data-id="' + theme.id + '"><strong>' + theme.name + '</strong><span>' + label + '</span></button>';
+    }).join('');
+    return '<h2>Tienda</h2>' +
+      '<article class="card"><div class="row"><h3>Anuncio</h3><span class="price">' + ad.used + ' de ' + MAX_ADS + ' hoy</span></div><p class="help">' + (ad.real ? 'Miras un anuncio y cobras monedas. Si lo cierras antes, no cuenta.' : 'En este modo el anuncio es una simulación. No ingresa dinero.') + '</p><button type="button" class="primary" data-action="watch-ad">' + esc(ad.title) + '</button></article>' +
+      '<article class="card"><div class="row"><h3>Escudo de racha</h3><span class="price">' + state.freezes + '/' + SHIELD_MAX + '</span></div><p class="help">Si fallas un día, el escudo se gasta y la racha sigue. Cuesta ' + SHIELD_COST + ' monedas.</p><button type="button" class="primary" data-action="buy-shield">Comprar escudo</button></article>' +
+      '<article class="card"><h3>Monedas con Stars</h3><p class="help">El pago lo hace Telegram. Las monedas se quedan en este dispositivo.</p><div class="packs">' + packHtml + '</div></article>' +
+      '<h3>Temas</h3><div class="themes">' + themeHtml + '</div>';
+  }
+
+  function screenMe() {
+    var days = Object.keys(state.log).filter(function (key) {
+      return (state.log[key] || []).length;
+    }).length;
+    return '<h2>Tu cuenta</h2>' +
+      '<label>Cómo te llamamos<input id="player-name" maxlength="24" value="' + esc(state.name) + '" placeholder="Tu nombre"></label>' +
+      '<div class="stats"><div class="stat"><b>' + state.best + '</b><span>Mejor racha</span></div><div class="stat"><b>' + days + '</b><span>Días con hábito</span></div><div class="stat"><b>' + state.earned + '</b><span>Monedas ganadas</span></div><div class="stat"><b>' + state.habits.length + '</b><span>Hábitos</span></div></div>' +
+      '<p class="help">Los hábitos y las monedas se guardan en este teléfono y, si Telegram lo permite, en tu cuenta. No hay un servidor con tu lista. Las Stars las cobra Telegram.</p>' +
+      '<button type="button" class="danger" data-action="ask-wipe">Borrar datos de este teléfono</button>';
+  }
+
+  function render() {
+    var view = document.getElementById('view');
+    if (screen === 'tienda') view.innerHTML = screenShop();
+    else if (screen === 'yo') view.innerHTML = screenMe();
+    else view.innerHTML = screenHoy();
+    document.getElementById('coin-count').textContent = String(state.coins);
+    document.body.dataset.theme = state.theme;
+    document.querySelectorAll('nav button').forEach(function (button) {
+      button.classList.toggle('on', button.dataset.screen === screen);
+    });
+  }
+
+  function openModal(html) {
+    var modal = document.getElementById('modal');
+    modal.innerHTML = '<div class="sheet">' + html + '</div>';
+    modal.hidden = false;
+  }
+
+  function closeModal() {
+    var modal = document.getElementById('modal');
+    modal.hidden = true;
+    modal.innerHTML = '';
+    draft = null;
+  }
+
+  function habitForm() {
+    var emojis = EMOJIS.map(function (emoji) {
+      var on = emoji === draft.emoji ? ' on' : '';
+      return '<button type="button" class="emoji-btn' + on + '" data-action="pick-emoji" data-emoji="' + emoji + '">' + emoji + '</button>';
+    }).join('');
+    var rewards = [5, 10, 15, 20, 30].map(function (reward) {
+      var selected = Number(draft.reward) === reward ? ' selected' : '';
+      return '<option value="' + reward + '"' + selected + '>' + reward + ' monedas</option>';
+    }).join('');
+    var remove = draft.id ? '<button type="button" class="danger" data-action="delete-habit">Quitar hábito</button>' : '';
+    return '<h3>' + (draft.id ? 'Editar hábito' : 'Nuevo hábito') + '</h3>' +
+      '<div class="emojis">' + emojis + '</div>' +
+      '<label>Nombre<input id="habit-name" maxlength="32" value="' + esc(draft.name) + '" placeholder="Ejemplo: caminar 10 minutos"></label>' +
+      '<label>Recompensa<select id="habit-reward">' + rewards + '</select></label>' +
+      '<button type="button" class="primary" data-action="save-habit">Guardar</button>' +
+      '<button type="button" class="ghost" data-action="close-modal">Cancelar</button>' + remove;
+  }
+
+  function checkHabit(id) {
+    var habit = state.habits.find(function (item) { return item.id === id; });
+    if (!habit) return;
+    var done = state.log[dayKey()] || [];
+    if (done.indexOf(id) !== -1) {
+      toast('Este hábito ya cuenta hoy');
+      return;
+    }
+    consumeUndo();
+    var before = JSON.stringify(state);
+    var wasEmpty = done.length === 0;
+    state.log[dayKey()] = done.concat([id]);
+    state.coins += Number(habit.reward) || 0;
+    state.earned += Number(habit.reward) || 0;
+    var result = wasEmpty ? commitDay() : { bonus: 0, freeze: false };
+    trimState();
+    pendingUndo = { before: before, until: Date.now() + 8000 };
+    save();
+    render();
+    tap('medium');
+    var message = '+' + habit.reward + ' monedas';
+    if (result.freeze) message = 'Escudo usado. La racha sigue.';
+    if (result.bonus) message = 'Meta de racha: +' + result.bonus + ' monedas';
+    showUndo(message);
+  }
+
+  function saveHabit() {
+    var nameInput = document.getElementById('habit-name');
+    var rewardInput = document.getElementById('habit-reward');
+    if (!nameInput || !draft) return;
+    var name = nameInput.value.trim().slice(0, 32);
+    var reward = Number(rewardInput.value) || 10;
+    if (!name) {
+      toast('Ponle un nombre corto');
+      return;
+    }
+    consumeUndo();
+    if (draft.id) {
+      var current = state.habits.find(function (item) { return item.id === draft.id; });
+      if (current) {
+        current.name = name;
+        current.emoji = draft.emoji;
+        current.reward = reward;
+      }
+    } else {
+      if (state.habits.length >= 8) {
+        toast('Máximo 8 hábitos. Quita uno antes.');
+        return;
+      }
+      state.habits.push({ id: uid(), name: name, emoji: draft.emoji, reward: reward });
+    }
+    save();
+    closeModal();
+    render();
+  }
+
+  function deleteHabit() {
+    if (!draft || !draft.id) return;
+    consumeUndo();
+    state.habits = state.habits.filter(function (item) { return item.id !== draft.id; });
+    save();
+    closeModal();
+    render();
+    toast('Hábito quitado');
+  }
+
+  function grantAd() {
+    var today = dayKey();
+    if ((state.ads[today] || 0) >= MAX_ADS) return;
+    state.ads[today] = (state.ads[today] || 0) + 1;
+    state.lastAdAt = Date.now();
+    state.coins += AD_REWARD;
+    state.earned += AD_REWARD;
+    trimState();
+    save();
+    render();
+    tap('medium');
+    toast('+' + AD_REWARD + ' monedas');
+  }
+
+  function watchAd() {
+    consumeUndo();
+    var today = dayKey();
+    if ((state.ads[today] || 0) >= MAX_ADS) {
+      toast('Hoy ya has visto los anuncios disponibles');
+      return;
+    }
+    if (Date.now() - (state.lastAdAt || 0) < AD_WAIT) {
+      toast('Espera un minuto entre anuncios');
+      return;
+    }
+    var zone = String(CFG.monetagZoneId || '').trim();
+    var show = zone ? window['show_' + zone] : null;
+    if (!tg || !tg.initData || !zone || typeof show !== 'function') {
+      if (tg && tg.initData && zone) {
+        toast('El anuncio aún se está cargando. Prueba en unos segundos.');
+        return;
+      }
+      openModal('<h3>Anuncio de prueba</h3><p class="help">Esto no es un anuncio de verdad y no genera ingresos. Cuando pegues tu zona de Monetag en config.js y abras la app desde Telegram, aquí se mostrará el anuncio real. Las monedas de prueba sirven para ver la tienda.</p><button type="button" class="primary" data-action="simulate-ad">Simular y cobrar</button><button type="button" class="ghost" data-action="close-modal">Ahora no</button>');
+      return;
+    }
+    toast('Cargando anuncio…');
+    show({ ymid: today + '-' + Date.now() }).then(function (result) {
+      if (!result || result.reward_event_type !== 'valued') {
+        toast('Has cerrado el anuncio antes de tiempo. No hay monedas.');
+        return;
+      }
+      grantAd();
+    }).catch(function () {
+      toast('Ahora no hay anuncio. Prueba en unos minutos.');
+    });
+  }
+
+  function buyShield() {
+    consumeUndo();
+    if (state.freezes >= SHIELD_MAX) {
+      toast('Ya tienes ' + SHIELD_MAX + ' escudos');
+      return;
+    }
+    if (state.coins < SHIELD_COST) {
+      toast('Te faltan monedas. Un anuncio o un paquete te acerca.');
+      return;
+    }
+    state.coins -= SHIELD_COST;
+    state.freezes += 1;
+    save();
+    render();
+    toast('Escudo guardado');
+  }
+
+  function buyTheme(id) {
+    consumeUndo();
+    var theme = THEMES.find(function (item) { return item.id === id; });
+    if (!theme) return;
+    if (state.owned.indexOf(id) !== -1) {
+      state.theme = id;
+      save();
+      render();
+      return;
+    }
+    if (state.coins < theme.price) {
+      toast('Te faltan monedas');
+      return;
+    }
+    state.coins -= theme.price;
+    state.owned.push(id);
+    state.theme = id;
+    save();
+    render();
+    toast('Tema ' + theme.name + ' activo');
+  }
+
+  function buyPack(sku) {
+    consumeUndo();
+    if (!tg || !tg.initData || !tg.openInvoice) {
+      toast('Las Stars solo se pagan dentro de Telegram');
+      return;
+    }
+    toast('Abriendo el pago…');
+    fetch('/api/invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sku: sku, initData: tg.initData })
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+    }).then(function (result) {
+      if (!result.ok) {
+        toast(result.data.error || 'No se ha podido abrir el pago');
+        return;
+      }
+      tg.openInvoice(result.data.url, function (status) {
+        if (status === 'paid') {
+          if (state.payments.indexOf(result.data.payload) === -1) {
+            state.payments.push(result.data.payload);
+            state.coins += Number(result.data.coins) || 0;
+            state.earned += Number(result.data.coins) || 0;
+            save();
+            render();
+            tap('heavy');
+            toast('+' + result.data.coins + ' monedas');
+          }
+          return;
+        }
+        toast(status === 'cancelled' ? 'Pago cancelado' : 'El pago no se ha completado');
+      });
+    }).catch(function () {
+      toast('Sin conexión con el servidor');
+    });
+  }
+
+  function askWipe() {
+    openModal('<h3>¿Borrar todo?</h3><p class="help">Se borran hábitos, racha y monedas de este teléfono. No se puede deshacer.</p><button type="button" class="primary" data-action="confirm-wipe">Sí, borrar</button><button type="button" class="ghost" data-action="close-modal">Cancelar</button>');
+  }
+
+  function wipe() {
+    consumeUndo();
+    state = fresh();
+    try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+    save();
+    closeModal();
+    screen = 'hoy';
+    render();
+    toast('Datos borrados');
+    if (tg && tg.CloudStorage && tg.initData) {
+      try { tg.CloudStorage.removeItem('streakmaster', function () {}); } catch (err) {}
+    }
+  }
+
+  function onClick(event) {
+    if (event.target.id === 'modal') {
+      closeModal();
+      return;
+    }
+    var button = event.target.closest('[data-action]');
+    if (!button) return;
+    var action = button.dataset.action;
+    if (action === 'go') {
+      consumeUndo();
+      screen = button.dataset.screen || 'hoy';
+      closeModal();
+      render();
+      return;
+    }
+    if (action === 'check') return checkHabit(button.dataset.id);
+    if (action === 'open-add') {
+      draft = { id: null, emoji: '✅', name: '', reward: 10 };
+      openModal(habitForm());
+      return;
+    }
+    if (action === 'open-edit') {
+      var habit = state.habits.find(function (item) { return item.id === button.dataset.id; });
+      if (!habit) return;
+      draft = { id: habit.id, emoji: habit.emoji, name: habit.name, reward: habit.reward };
+      openModal(habitForm());
+      return;
+    }
+    if (action === 'pick-emoji') {
+      if (!draft) return;
+      draft.emoji = button.dataset.emoji;
+      document.querySelectorAll('.emoji-btn').forEach(function (el) {
+        el.classList.toggle('on', el.dataset.emoji === draft.emoji);
+      });
+      return;
+    }
+    if (action === 'save-habit') return saveHabit();
+    if (action === 'delete-habit') return deleteHabit();
+    if (action === 'close-modal') return closeModal();
+    if (action === 'watch-ad') return watchAd();
+    if (action === 'simulate-ad') {
+      closeModal();
+      grantAd();
+      return;
+    }
+    if (action === 'buy-shield') return buyShield();
+    if (action === 'buy-theme') return buyTheme(button.dataset.id);
+    if (action === 'buy-pack') return buyPack(button.dataset.sku);
+    if (action === 'ask-wipe') return askWipe();
+    if (action === 'confirm-wipe') return wipe();
+  }
+
+  function initTelegram() {
+    if (!tg || !tg.initData) return;
+    try {
+      tg.ready();
+      tg.expand();
+      if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+      tg.setHeaderColor('#0c0907');
+      tg.setBackgroundColor('#0c0907');
+      var user = tg.initDataUnsafe && tg.initDataUnsafe.user;
+      if (user && user.first_name && !state.name) state.name = String(user.first_name).slice(0, 24);
+    } catch (err) {}
+  }
+
+  function loadMonetag() {
+    var url = String(CFG.monetagScriptUrl || '').trim();
+    var zone = String(CFG.monetagZoneId || '').trim();
+    if (!url || !zone || !tg || !tg.initData || document.getElementById('monetag-sdk')) return;
+    var script = document.createElement('script');
+    script.id = 'monetag-sdk';
+    script.src = url;
+    script.dataset.zone = zone;
+    script.dataset.sdk = 'show_' + zone;
+    script.onload = function () {
+      var show = window['show_' + zone];
+      if (typeof show === 'function') show({ type: 'preload', ymid: 'boot' }).catch(function () {});
+    };
+    document.head.appendChild(script);
+  }
+
+  function loadPacks() {
+    fetch('/api/invoice').then(function (res) { return res.json(); }).then(function (data) {
+      if (data && Array.isArray(data.packs) && data.packs.length) {
+        packs = data.packs;
+        if (screen === 'tienda') render();
+      }
+    }).catch(function () {});
+  }
+
+  document.body.addEventListener('click', onClick);
+  document.body.addEventListener('change', function (event) {
+    if (event.target.id !== 'player-name') return;
+    state.name = event.target.value.trim().slice(0, 24);
+    save();
+  });
+
+  window.addEventListener('error', function (event) {
+    var view = document.getElementById('view');
+    if (view && !view.childNodes.length) view.textContent = 'No se ha podido abrir la app. Recarga.';
+  });
+
+  state = loadLocal() || fresh();
+  initTelegram();
+  render();
+  pullCloud();
+  loadPacks();
+  loadMonetag();
+  setTimeout(function () {
+    if (!cloudReady) {
+      cloudReady = true;
+      if (dirtyBeforeCloud) pushCloud();
+    }
+  }, 2500);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Hooks para TikTok, Reels y Shorts en español. Tres generaciones al día. Luego, un pase de pago.">
+<title>HookGen — hooks para vídeos cortos</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%8E%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,560;1,9..144,560&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3efe6;
+    --ink: #1b1914;
+    --muted: #5e584e;
+    --line: #d9d1c3;
+    --stamp: #c2412d;
+    --card: #fffaf3;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: Outfit, system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(900px 280px at 10% -10%, rgba(194, 65, 45, .12), transparent 50%),
+      var(--paper);
+  }
+  button, textarea, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+  .wrap { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 64px; }
+  header { display: flex; justify-content: space-between; gap: 16px; align-items: end; }
+  .brand { font-family: Fraunces, Georgia, serif; font-size: 40px; font-weight: 560; letter-spacing: -.04em; line-height: .9; }
+  .brand i { font-style: italic; color: var(--stamp); }
+  #usage { font-weight: 700; border: 1px solid var(--ink); border-radius: 999px; padding: 8px 12px; background: var(--card); }
+  .lede { font-size: 18px; max-width: 38rem; line-height: 1.45; }
+  form, .card, .hook {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+  }
+  form { padding: 16px; }
+  label { display: block; font-weight: 650; }
+  textarea, input[type="email"] {
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #fff;
+  }
+  textarea { min-height: 96px; resize: vertical; }
+  .group { margin-top: 14px; }
+  .group p { margin: 0 0 8px; font-weight: 650; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: 1px solid var(--line);
+    background: transparent;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 600;
+  }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .primary, .ghost, .copy {
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-weight: 700;
+  }
+  .primary { width: 100%; margin-top: 16px; border: 0; background: var(--stamp); color: white; }
+  .primary:disabled { opacity: .6; cursor: wait; }
+  .ghost, .copy { border: 1px solid var(--ink); background: transparent; }
+  .hint { color: var(--muted); font-size: 14px; }
+  .hook { padding: 14px 14px 12px; margin-top: 10px; }
+  .hook .num { font-family: Fraunces, Georgia, serif; color: var(--stamp); font-size: 28px; margin: 0; }
+  .hook h2 { font-family: Fraunces, Georgia, serif; font-weight: 560; font-size: 28px; line-height: 1.15; letter-spacing: -.03em; margin: 4px 0 8px; }
+  .pattern { color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .caption { white-space: pre-wrap; line-height: 1.45; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  #status { min-height: 1.2em; color: var(--muted); }
+  footer, #privacidad { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  footer { margin-top: 28px; }
+  #modal[hidden] { display: none; }
+  #modal { position: fixed; inset: 0; background: rgba(27, 25, 20, .46); display: grid; place-items: end center; z-index: 5; }
+  .sheet {
+    width: min(560px, 100%);
+    max-height: 92dvh;
+    overflow: auto;
+    background: var(--paper);
+    border-radius: 20px 20px 0 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  .price { display: flex; justify-content: space-between; gap: 12px; width: 100%; text-align: left; margin-top: 8px; }
+  .check { display: flex; gap: 8px; align-items: flex-start; font-weight: 500; margin: 12px 0; }
+  .check input { margin-top: 4px; }
+  #toast {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper); padding: 10px 14px; border-radius: 999px;
+    opacity: 0; pointer-events: none; font-weight: 650;
+  }
+  #toast.show { opacity: 1; }
+  @media (min-width: 760px) { #modal { place-items: center; } .sheet { border-radius: 20px; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Hook<i>Gen</i></div>
+    <div id="usage">3 hoy</div>
+  </header>
+  <p class="lede">La primera frase del vídeo, dicha en voz alta. Tres generaciones al día. Si te encaja, un pase de unos días.</p>
+  <form id="form">
+    <label for="topic">De qué va el vídeo</label>
+    <textarea id="topic" maxlength="180" required placeholder="Cerrar un cliente por WhatsApp sin parecer pesado"></textarea>
+    <div class="group">
+      <p>Dónde se publica</p>
+      <div class="chips" id="platforms">
+        <button type="button" class="chip" data-platform="tiktok" aria-pressed="true">TikTok</button>
+        <button type="button" class="chip" data-platform="reels" aria-pressed="false">Reels</button>
+        <button type="button" class="chip" data-platform="shorts" aria-pressed="false">Shorts</button>
+        <button type="button" class="chip" data-platform="instagram" aria-pressed="false">Instagram</button>
+      </div>
+    </div>
+    <div class="group">
+      <p>Tono</p>
+      <div class="chips" id="tones">
+        <button type="button" class="chip" data-tone="directo" aria-pressed="true">Directo</button>
+        <button type="button" class="chip" data-tone="historia" aria-pressed="false">Historia</button>
+        <button type="button" class="chip" data-tone="polemico" aria-pressed="false">Polémico</button>
+        <button type="button" class="chip" data-tone="util" aria-pressed="false">Útil</button>
+        <button type="button" class="chip" data-tone="curioso" aria-pressed="false">Curioso</button>
+      </div>
+    </div>
+    <button class="primary" id="go" type="submit">Generar 5 hooks</button>
+    <p class="hint" id="status" role="status"></p>
+  </form>
+  <div id="results"></div>
+  <footer>
+    <details>
+      <summary>Ya pagué en otro móvil</summary>
+      <form id="restore">
+        <label for="restore-email">Email del recibo</label>
+        <input id="restore-email" type="email" autocomplete="email" placeholder="tu@email.com">
+        <button class="primary" type="submit">Recuperar compra</button>
+      </form>
+    </details>
+    <section id="privacidad">
+      <h2>Privacidad</h2>
+      <p>El tema que escribes se envía al servidor para redactar los hooks. Si hay una clave de IA configurada, ese texto también llega a Groq o a OpenAI. El pase de pago lo guarda este navegador. Stripe procesa el cobro y ve el email del recibo.</p>
+      <p id="contact"></p>
+    </section>
+  </footer>
+</div>
+<div id="modal" hidden></div>
+<div id="toast" role="status"></div>
+<script src="config.js"></script>
+<script src="lib/templates.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var FREE = 3;
+  var platform = 'tiktok';
+  var tone = 'directo';
+  var packs = [
+    { sku: 'week', name: 'Pro 7 días', amount: 299, days: 7, credits: 0 },
+    { sku: 'month', name: 'Pro 30 días', amount: 699, days: 30, credits: 0 },
+    { sku: 'pack50', name: '50 créditos', amount: 499, days: 0, credits: 50 }
+  ];
+  var creditsEnabled = false;
+  var stripeReady = false;
+  var usage = null;
+
+  function deviceId() {
+    var key = 'hookgen.device';
+    var id = localStorage.getItem(key);
+    if (!id) {
+      id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+      localStorage.setItem(key, id);
+    }
+    return id;
+  }
+
+  var device = deviceId();
+
+  function today() {
+    var date = new Date();
+    var month = String(date.getMonth() + 1).padStart(2, '0');
+    var day = String(date.getDate()).padStart(2, '0');
+    return date.getFullYear() + '-' + month + '-' + day;
+  }
+
+  function localQuota() {
+    try {
+      var data = JSON.parse(localStorage.getItem('hookgen.free') || '{}');
+      if (data.day !== today()) return { day: today(), used: 0 };
+      return { day: today(), used: Number(data.used) || 0 };
+    } catch (err) {
+      return { day: today(), used: 0 };
+    }
+  }
+
+  function proToken() {
+    return localStorage.getItem('hookgen.pro') || '';
+  }
+
+  function readPayload(token) {
+    try {
+      var body = token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+      while (body.length % 4) body += '=';
+      return JSON.parse(atob(body));
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function euros(cents) {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+  }
+
+  function toast(message) {
+    var el = document.getElementById('toast');
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(function () { el.classList.remove('show'); }, 2600);
+  }
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderUsage() {
+    var el = document.getElementById('usage');
+    var payload = readPayload(proToken());
+    if (payload && payload.proUntil && Date.now() < Number(payload.proUntil)) {
+      el.textContent = 'Pro hasta ' + new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' }).format(new Date(Number(payload.proUntil)));
+      return;
+    }
+    if (usage && usage.left != null) {
+      el.textContent = Number(usage.left) === 1 ? 'Te queda 1 hoy' : 'Te quedan ' + usage.left + ' hoy';
+      return;
+    }
+    var left = Math.max(0, FREE - localQuota().used);
+    el.textContent = left === 1 ? 'Te queda 1 hoy' : 'Te quedan ' + left + ' hoy';
+  }
+
+  function renderHooks(data) {
+    var box = document.getElementById('results');
+    var source = data.source === 'plantilla'
+      ? 'Textos de reserva. Si conectas Groq, los escribe el modelo.'
+      : 'Escritos con IA. Revísalos en voz alta antes de grabar.';
+    document.getElementById('status').textContent = source;
+    box.innerHTML = data.hooks.map(function (item, index) {
+      return '<article class="hook"><p class="num">' + (index + 1) + '</p><p class="pattern">' + esc(item.pattern || '') + '</p><h2>' + esc(item.hook) + '</h2><p class="caption">' + esc(item.caption || '') + '</p><div class="actions"><button type="button" class="copy" data-copy="hook">Copiar hook</button><button type="button" class="copy" data-copy="all">Copiar hook y texto</button></div></article>';
+    }).join('');
+    box.querySelectorAll('.hook').forEach(function (article, index) {
+      var item = data.hooks[index];
+      article.querySelectorAll('[data-copy]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var text = button.dataset.copy === 'all'
+            ? item.hook + '\n\n' + (item.caption || '') + '\n\n' + (item.cta || '')
+            : item.hook;
+          copyText(text);
+        });
+      });
+    });
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('Copiado'); }, function () { fallbackCopy(text); });
+      return;
+    }
+    fallbackCopy(text);
+  }
+
+  function fallbackCopy(text) {
+    var area = document.createElement('textarea');
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    try { document.execCommand('copy'); toast('Copiado'); }
+    catch (err) { toast('Selecciona el texto y cópialo a mano'); }
+    area.remove();
+  }
+
+  function openPaywall() {
+    var buttons = packs.map(function (pack) {
+      var note = pack.credits
+        ? (creditsEnabled ? 'Se gastan de uno en uno' : 'Se activa al conectar Supabase')
+        : pack.days + ' días sin contar';
+      return '<button type="button" class="ghost price" data-sku="' + pack.sku + '"><span><strong>' + esc(pack.name) + '</strong><br><span class="hint">' + note + '</span></span><span>' + euros(pack.amount) + '</span></button>';
+    }).join('');
+    var modal = document.getElementById('modal');
+    modal.innerHTML = '<div class="sheet"><h2>Seguir generando</h2><p>Hoy ya van 3. Un pase no descuenta generaciones mientras dure. El precio que ves es el que pagas.</p>' + buttons + '<label class="check"><input id="pay-terms" type="checkbox"> Quiero el acceso en cuanto pague y acepto que, al recibirlo, no aplica el derecho de desistimiento de 14 días.</label><label>Email del recibo<input id="pay-email" type="email" autocomplete="email" placeholder="tu@email.com"></label><p class="hint">Stripe hace el cobro. Puedes cerrar esta ventana.</p><button type="button" class="ghost" id="close-pay">Ahora no</button></div>';
+    modal.hidden = false;
+    modal.querySelectorAll('[data-sku]').forEach(function (button) {
+      button.addEventListener('click', function () { buy(button.dataset.sku); });
+    });
+    document.getElementById('close-pay').addEventListener('click', closePay);
+  }
+
+  function closePay() {
+    var modal = document.getElementById('modal');
+    modal.hidden = true;
+    modal.innerHTML = '';
+  }
+
+  function buy(sku) {
+    var terms = document.getElementById('pay-terms');
+    var email = document.getElementById('pay-email').value.trim();
+    if (!terms.checked) {
+      toast('Marca la casilla para continuar');
+      return;
+    }
+    if (!stripeReady) {
+      toast('Stripe aún no está configurado en el servidor');
+      return;
+    }
+    fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sku: sku, deviceId: device, email: email, acceptTerms: true })
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+    }).then(function (result) {
+      if (!result.ok) {
+        toast(result.data.error || 'No se ha podido abrir el pago');
+        return;
+      }
+      location.href = result.data.url;
+    }).catch(function () {
+      toast('Sin conexión con el servidor');
+    });
+  }
+
+  function offlineHooks(topic) {
+    var quota = localQuota();
+    if (!readPayload(proToken()) && quota.used >= FREE) {
+      openPaywall();
+      return;
+    }
+    var data = window.HookTemplates.generate({ topic: topic, platform: platform, tone: tone });
+    quota.used += 1;
+    quota.day = today();
+    localStorage.setItem('hookgen.free', JSON.stringify(quota));
+    usage = { mode: 'local', left: Math.max(0, FREE - quota.used), limit: FREE };
+    renderHooks({ source: 'plantilla', hooks: data.hooks });
+    renderUsage();
+  }
+
+  document.getElementById('form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var topic = document.getElementById('topic').value.trim();
+    if (topic.length < 3) {
+      toast('Escribe el tema con un poco más de detalle');
+      return;
+    }
+    var button = document.getElementById('go');
+    button.disabled = true;
+    button.textContent = 'Escribiendo…';
+    var headers = { 'Content-Type': 'application/json', 'X-Device-Id': device };
+    if (proToken()) headers.Authorization = 'Bearer ' + proToken();
+    fetch('/api/generate', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ topic: topic, platform: platform, tone: tone, deviceId: device })
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
+    }).then(function (result) {
+      if (result.status === 402) {
+        openPaywall();
+        return;
+      }
+      if (!result.ok) throw new Error(result.data.error || 'No se ha podido generar');
+      usage = result.data.usage || null;
+      if (usage && usage.mode === 'local') {
+        var quota = localQuota();
+        quota.used += 1;
+        quota.day = today();
+        localStorage.setItem('hookgen.free', JSON.stringify(quota));
+        usage.left = Math.max(0, FREE - quota.used);
+      }
+      renderHooks(result.data);
+      renderUsage();
+    }).catch(function () {
+      offlineHooks(topic);
+    }).finally(function () {
+      button.disabled = false;
+      button.textContent = 'Generar 5 hooks';
+    });
+  });
+
+  document.getElementById('platforms').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-platform]');
+    if (!button) return;
+    platform = button.dataset.platform;
+    document.querySelectorAll('[data-platform]').forEach(function (el) {
+      el.setAttribute('aria-pressed', el === button ? 'true' : 'false');
+    });
+  });
+
+  document.getElementById('tones').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-tone]');
+    if (!button) return;
+    tone = button.dataset.tone;
+    document.querySelectorAll('[data-tone]').forEach(function (el) {
+      el.setAttribute('aria-pressed', el === button ? 'true' : 'false');
+    });
+  });
+
+  document.getElementById('modal').addEventListener('click', function (event) {
+    if (event.target.id === 'modal') closePay();
+  });
+
+  document.getElementById('restore').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var email = document.getElementById('restore-email').value.trim();
+    fetch('/api/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, deviceId: device })
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+    }).then(function (result) {
+      if (!result.ok) {
+        toast(result.data.error || 'No se ha encontrado la compra');
+        return;
+      }
+      if (result.data.token) localStorage.setItem('hookgen.pro', result.data.token);
+      usage = null;
+      renderUsage();
+      toast(result.data.bonus ? 'Compra recuperada. Créditos: ' + result.data.bonus : 'Pase recuperado en este móvil');
+    }).catch(function () {
+      toast('Sin conexión con el servidor');
+    });
+  });
+
+  function confirmReturn() {
+    var params = new URLSearchParams(location.search);
+    if (params.get('pago') === 'cancelado') toast('Pago cancelado. No se ha cobrado.');
+    var sessionId = params.get('session_id');
+    if (params.get('pago') === 'ok' && sessionId) {
+      fetch('/api/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sessionId, deviceId: device, proToken: proToken() })
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      }).then(function (result) {
+        if (!result.ok) {
+          toast(result.data.error || 'El pago no se ha activado');
+          return;
+        }
+        if (result.data.token) localStorage.setItem('hookgen.pro', result.data.token);
+        usage = null;
+        renderUsage();
+        toast(result.data.mode === 'credits' ? 'Créditos sumados' : 'Pase activo');
+      }).catch(function () {
+        toast('No se ha podido confirmar el pago');
+      });
+    }
+    if (params.get('pago') || sessionId) history.replaceState({}, '', location.pathname);
+  }
+
+  var contact = window.HOOKGEN_CONFIG && window.HOOKGEN_CONFIG.contactEmail;
+  if (contact) document.getElementById('contact').textContent = 'Contacto: ' + contact;
+
+  fetch('/api/checkout').then(function (res) { return res.json(); }).then(function (data) {
+    if (data && Array.isArray(data.packs)) packs = data.packs;
+    creditsEnabled = Boolean(data && data.creditsEnabled);
+    stripeReady = Boolean(data && data.stripe);
+    if (data && data.freePerDay) FREE = data.freePerDay;
+    renderUsage();
+  }).catch(function () {});
+
+  renderUsage();
+  confirmReturn();
+})();
+</script>
+</body>
+</html>

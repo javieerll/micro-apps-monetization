@@ -1,0 +1,8 @@
+{
+  "name": "facturapro",
+  "private": true,
+  "description": "Generador de facturas PDF con IVA para autónomos, límite gratis y Stripe.",
+  "engines": {
+    "node": "20.x"
+  }
+}

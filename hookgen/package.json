@@ -1,0 +1,8 @@
+{
+  "name": "hookgen",
+  "private": true,
+  "description": "Generador de hooks para TikTok e Instagram con límite gratis y Stripe.",
+  "engines": {
+    "node": "20.x"
+  }
+}

@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Facturas en PDF con IVA e IRPF para autónomos. Tres al mes gratis. Luego, un pago único.">
+<title>FacturaPro — facturas en PDF</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%84%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --paper: #f4f1ea;
+    --card: #fffdf8;
+    --ink: #1c2430;
+    --muted: #5c6675;
+    --line: #ddd4c4;
+    --navy: #1e3a5f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font-family: Outfit, system-ui, sans-serif; color: var(--ink); background: var(--paper); }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--navy); outline-offset: 2px;
+  }
+  .wrap { width: min(1100px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 70px; }
+  header { display: flex; justify-content: space-between; gap: 12px; align-items: end; }
+  .brand { font-family: Fraunces, Georgia, serif; font-size: 36px; letter-spacing: -.03em; }
+  #quota { font-weight: 700; border: 1px solid var(--navy); border-radius: 999px; padding: 8px 12px; background: white; }
+  .notice { background: #fff7e8; border: 1px solid #ead7a4; border-radius: 14px; padding: 12px 14px; line-height: 1.45; }
+  .layout { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+  @media (min-width: 900px) { .layout { grid-template-columns: 1.1fr .9fr; align-items: start; } }
+  form, .sheet, .preview { background: var(--card); border: 1px solid var(--line); border-radius: 18px; }
+  form { padding: 16px; }
+  fieldset { border: 0; margin: 0 0 16px; padding: 0; }
+  legend, label { font-weight: 700; }
+  label { display: block; margin-top: 10px; font-size: 14px; }
+  input, select, textarea { width: 100%; margin-top: 4px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: white; }
+  textarea { min-height: 72px; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .line { display: grid; grid-template-columns: 1fr 70px 100px 36px; gap: 6px; margin-top: 8px; }
+  .line input { margin-top: 0; }
+  .icon { border: 1px solid var(--line); background: transparent; border-radius: 10px; }
+  .primary, .ghost { border-radius: 12px; padding: 12px 14px; font-weight: 700; }
+  .primary { width: 100%; border: 0; background: var(--navy); color: white; margin-top: 12px; }
+  .ghost { border: 1px solid var(--navy); background: transparent; }
+  .row-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .preview { padding: 16px; position: sticky; top: 12px; }
+  .preview h2 { font-family: Fraunces, Georgia, serif; font-weight: 560; margin: 0 0 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.num, th.num { text-align: right; }
+  .totals { margin-top: 10px; }
+  .totals div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+  .totals .grand { font-size: 20px; font-weight: 750; }
+  .hint, footer { color: var(--muted); font-size: 14px; line-height: 1.45; }
+  .history button { display: block; width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 8px 0; }
+  #modal[hidden] { display: none; }
+  #modal { position: fixed; inset: 0; background: rgba(28, 36, 48, .45); display: grid; place-items: end center; z-index: 5; }
+  .sheet { width: min(520px, 100%); padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
+  .check { display: flex; gap: 8px; align-items: flex-start; font-weight: 500; }
+  .check input { width: auto; margin-top: 4px; }
+  #toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: var(--ink); color: white; padding: 10px 14px; border-radius: 999px; opacity: 0; font-weight: 700; }
+  #toast.show { opacity: 1; }
+  @media (min-width: 760px) { #modal { place-items: center; } .sheet { border-radius: 20px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">FacturaPro</div>
+    <div id="quota">3 este mes</div>
+  </header>
+  <p class="notice">Hace un PDF con base, IVA y retención. No lo manda a Hacienda y no es un programa certificado para Verifactu. Revisa el número, el NIF y los impuestos antes de enviarlo.</p>
+  <div class="layout">
+    <form id="form">
+      <fieldset>
+        <legend>Tus datos</legend>
+        <label>Nombre o razón social<input id="issuer-name" autocomplete="organization" required></label>
+        <div class="split">
+          <label>NIF<input id="issuer-nif" autocomplete="off" required></label>
+          <label>Email<input id="issuer-email" type="email" autocomplete="email"></label>
+        </div>
+        <label>Dirección<input id="issuer-address" autocomplete="street-address"></label>
+        <div class="split">
+          <label>Teléfono<input id="issuer-phone" autocomplete="tel"></label>
+          <label>IBAN<input id="issuer-iban" autocomplete="off" placeholder="ES00 0000 0000 0000 0000 0000"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Cliente</legend>
+        <label>Nombre o razón social<input id="client-name" required></label>
+        <div class="split">
+          <label>NIF<input id="client-nif"></label>
+          <label>Dirección<input id="client-address"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Factura</legend>
+        <div class="split">
+          <label>Número<input id="number" required></label>
+          <label>Fecha<input id="date" type="date" required></label>
+        </div>
+        <div class="split">
+          <label>IVA
+            <select id="iva">
+              <option value="0.21" selected>21 %</option>
+              <option value="0.10">10 %</option>
+              <option value="0.04">4 %</option>
+              <option value="0">0 %</option>
+            </select>
+          </label>
+          <label>Retención IRPF
+            <select id="irpf">
+              <option value="0" selected>Sin retención</option>
+              <option value="0.15">15 %</option>
+              <option value="0.07">7 %</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint">Si el IVA es 0, explica el motivo en las notas. La retención la restan muchos autónomos; si no lo tienes claro, déjala en cero y confírmalo.</p>
+        <div id="lines"></div>
+        <div class="row-actions">
+          <button type="button" class="ghost" id="add-line">Añadir concepto</button>
+          <button type="button" class="ghost" id="fresh">Nueva factura</button>
+        </div>
+        <label>Notas<textarea id="notes" placeholder="Forma de pago, plazo, motivo de exención…"></textarea></label>
+        <button class="primary" id="download" type="submit">Descargar PDF</button>
+      </fieldset>
+      <section class="history">
+        <h2>Ya descargadas</h2>
+        <div id="history" class="hint">Todavía no hay ninguna en este navegador.</div>
+      </section>
+    </form>
+    <aside class="preview" id="preview" aria-live="polite"></aside>
+  </div>
+  <footer>
+    <details>
+      <summary>Ya pagué en otro navegador</summary>
+      <form id="restore">
+        <label>Email del recibo<input id="restore-email" type="email" autocomplete="email"></label>
+        <button class="primary" type="submit">Recuperar compra</button>
+      </form>
+    </details>
+    <p id="contact"></p>
+  </footer>
+</div>
+<div id="modal" hidden></div>
+<div id="toast" role="status"></div>
+<script src="config.js"></script>
+<script src="lib/calc.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var FREE = 3;
+  var stripeReady = false;
+  var price = 900;
+  var lines = [{ concept: '', qty: 1, price: '' }];
+  var serverQuota = null;
+
+  function deviceId() {
+    var key = 'facturapro.device';
+    var id = localStorage.getItem(key);
+    if (!id) {
+      id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+      localStorage.setItem(key, id);
+    }
+    return id;
+  }
+  var device = deviceId();
+
+  function money(value) {
+    return new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0) + ' EUR';
+  }
+  function euros(cents) {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+  }
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"]/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch];
+    });
+  }
+  function val(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+  function toast(message) {
+    var el = document.getElementById('toast');
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(function () { el.classList.remove('show'); }, 2600);
+  }
+  function monthKey() {
+    var date = new Date();
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+  }
+  function proToken() { return localStorage.getItem('facturapro.pro') || ''; }
+  function readPayload(token) {
+    try {
+      var body = token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+      while (body.length % 4) body += '=';
+      return JSON.parse(atob(body));
+    } catch (err) { return null; }
+  }
+  function localQuota() {
+    try {
+      var data = JSON.parse(localStorage.getItem('facturapro.quota') || '{}');
+      if (data.month !== monthKey()) return { month: monthKey(), ids: [] };
+      return { month: data.month, ids: Array.isArray(data.ids) ? data.ids : [] };
+    } catch (err) { return { month: monthKey(), ids: [] }; }
+  }
+  function peekNumber() {
+    var year = new Date().getFullYear();
+    var seq = {};
+    try { seq = JSON.parse(localStorage.getItem('facturapro.seq') || '{}'); } catch (err) {}
+    var n = seq.year === year ? Number(seq.n) || 0 : 0;
+    return 'F-' + year + '-' + String(n + 1).padStart(4, '0');
+  }
+  function commitNumber(number) {
+    var match = /^F-(\d{4})-(\d+)$/.exec(number);
+    if (!match) return;
+    var year = Number(match[1]);
+    var n = Number(match[2]);
+    var seq = {};
+    try { seq = JSON.parse(localStorage.getItem('facturapro.seq') || '{}'); } catch (err) {}
+    var current = seq.year === year ? Number(seq.n) || 0 : 0;
+    if (n > current) localStorage.setItem('facturapro.seq', JSON.stringify({ year: year, n: n }));
+  }
+
+  function renderLines() {
+    document.getElementById('lines').innerHTML = lines.map(function (line, index) {
+      return '<div class="line"><input data-line="concept" data-index="' + index + '" placeholder="Concepto" value="' + esc(line.concept) + '" aria-label="Concepto ' + (index + 1) + '"><input data-line="qty" data-index="' + index + '" type="number" min="0" step="0.01" value="' + esc(line.qty) + '" aria-label="Cantidad"><input data-line="price" data-index="' + index + '" type="number" min="0" step="0.01" value="' + esc(line.price) + '" aria-label="Precio" placeholder="Precio"><button type="button" class="icon" data-remove="' + index + '" aria-label="Quitar concepto">×</button></div>';
+    }).join('');
+  }
+
+  function readLines() {
+    var rows = [];
+    document.querySelectorAll('#lines .line').forEach(function (row) {
+      rows.push({
+        concept: row.querySelector('[data-line="concept"]').value.trim(),
+        qty: row.querySelector('[data-line="qty"]').value,
+        price: row.querySelector('[data-line="price"]').value
+      });
+    });
+    return rows;
+  }
+
+  function syncLinesFromDom() {
+    var current = readLines();
+    if (current.length) lines = current;
+  }
+
+  function collect() {
+    syncLinesFromDom();
+    return {
+      issuer: {
+        name: val('issuer-name'),
+        nif: val('issuer-nif'),
+        address: val('issuer-address'),
+        email: val('issuer-email'),
+        phone: val('issuer-phone'),
+        iban: val('issuer-iban')
+      },
+      client: { name: val('client-name'), nif: val('client-nif'), address: val('client-address') },
+      number: val('number'),
+      date: val('date'),
+      iva: Number(val('iva')),
+      irpf: Number(val('irpf')),
+      notes: val('notes'),
+      lines: lines
+    };
+  }
+
+  function renderPreview() {
+    var model = collect();
+    var totals = window.FacturaCalc.calcInvoice(model.lines, model.iva, model.irpf);
+    var body = totals.lines.length ? totals.lines.map(function (line) {
+      return '<tr><td>' + esc(line.concept) + '</td><td class="num">' + esc(line.qty) + '</td><td class="num">' + money(line.price) + '</td><td class="num">' + money(line.amount) + '</td></tr>';
+    }).join('') : '<tr><td colspan="4">Añade un concepto con precio.</td></tr>';
+    var irpfRow = totals.irpfRate > 0 ? '<div><span>IRPF ' + Math.round(totals.irpfRate * 100) + ' %</span><span>− ' + money(totals.irpf) + '</span></div>' : '';
+    document.getElementById('preview').innerHTML =
+      '<h2>' + esc(model.number || 'Sin número') + '</h2>' +
+      '<p><strong>' + esc(model.issuer.name || 'Tu nombre') + '</strong><br>' + esc(model.issuer.nif || 'NIF') + '</p>' +
+      '<p>Cliente<br><strong>' + esc(model.client.name || 'Nombre del cliente') + '</strong></p>' +
+      '<table><thead><tr><th>Concepto</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Importe</th></tr></thead><tbody>' + body + '</tbody></table>' +
+      '<div class="totals"><div><span>Base</span><span>' + money(totals.base) + '</span></div><div><span>IVA ' + Math.round(totals.ivaRate * 100) + ' %</span><span>' + money(totals.iva) + '</span></div>' + irpfRow + '<div class="grand"><span>Total</span><span>' + money(totals.total) + '</span></div></div>';
+  }
+
+  function todayISO() {
+    var date = new Date();
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  }
+
+  function renderQuota() {
+    var el = document.getElementById('quota');
+    var payload = readPayload(proToken());
+    if ((payload && payload.lifetime) || (serverQuota && serverQuota.premium)) {
+      el.textContent = 'Ilimitado';
+      return;
+    }
+    var left = serverQuota && serverQuota.left != null
+      ? serverQuota.left
+      : Math.max(0, FREE - localQuota().ids.length);
+    el.textContent = left === 1 ? 'Te queda 1 este mes' : 'Te quedan ' + left + ' este mes';
+  }
+
+  function renderHistory() {
+    var box = document.getElementById('history');
+    var items = [];
+    try { items = JSON.parse(localStorage.getItem('facturapro.history') || '[]'); } catch (err) {}
+    if (!items.length) {
+      box.textContent = 'Todavía no hay ninguna en este navegador.';
+      return;
+    }
+    box.innerHTML = items.slice(0, 12).map(function (item, index) {
+      return '<button type="button" data-history="' + index + '">' + esc(item.number) + ' · ' + esc(item.client.name || 'Sin cliente') + ' · ' + money(item.total) + '</button>';
+    }).join('');
+  }
+
+  function saveIssuer() {
+    var model = collect();
+    localStorage.setItem('facturapro.issuer', JSON.stringify(model.issuer));
+  }
+
+  function loadIssuer() {
+    try {
+      var data = JSON.parse(localStorage.getItem('facturapro.issuer') || '{}');
+      ['name', 'nif', 'address', 'email', 'phone', 'iban'].forEach(function (key) {
+        if (data[key]) document.getElementById('issuer-' + key).value = data[key];
+      });
+    } catch (err) {}
+  }
+
+  function fill(model) {
+    document.getElementById('client-name').value = model.client.name || '';
+    document.getElementById('client-nif').value = model.client.nif || '';
+    document.getElementById('client-address').value = model.client.address || '';
+    document.getElementById('number').value = model.number || peekNumber();
+    document.getElementById('date').value = model.date || todayISO();
+    document.getElementById('iva').value = String(model.iva != null ? model.iva : 0.21);
+    document.getElementById('irpf').value = String(model.irpf != null ? model.irpf : 0);
+    document.getElementById('notes').value = model.notes || '';
+    lines = (model.lines && model.lines.length) ? model.lines : [{ concept: '', qty: 1, price: '' }];
+    renderLines();
+    renderPreview();
+  }
+
+  function validate(model, totals) {
+    if (!model.issuer.name || !model.issuer.nif) return 'Faltan tu nombre y tu NIF.';
+    if (!model.client.name) return 'Falta el nombre del cliente.';
+    if (!model.number || !model.date) return 'Faltan el número y la fecha.';
+    if (!totals.lines.length) return 'Añade al menos un concepto con cantidad y precio.';
+    return '';
+  }
+
+  function localAllow(invoiceId) {
+    var payload = readPayload(proToken());
+    if (payload && payload.lifetime && payload.deviceId === device) return { ok: true, premium: true };
+    var quota = localQuota();
+    if (quota.ids.indexOf(invoiceId) === -1) {
+      if (quota.ids.length >= FREE) return { ok: false };
+      quota.ids.push(invoiceId);
+      localStorage.setItem('facturapro.quota', JSON.stringify(quota));
+    }
+    return { ok: true, left: FREE - quota.ids.length, mode: 'local' };
+  }
+
+  function checkQuota(invoiceId) {
+    var headers = { 'Content-Type': 'application/json', 'X-Device-Id': device };
+    if (proToken()) headers.Authorization = 'Bearer ' + proToken();
+    return fetch('/api/quota', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ deviceId: device, invoiceId: invoiceId, token: proToken() })
+    }).then(function (res) {
+      return res.json().then(function (data) { return { status: res.status, data: data }; });
+    }).then(function (result) {
+      if (result.status === 402) return { ok: false };
+      if (result.status >= 400) throw new Error(result.data.error || 'cuota');
+      if (result.data.mode === 'local') {
+        var local = localAllow(invoiceId);
+        serverQuota = null;
+        return local;
+      }
+      serverQuota = { premium: Boolean(result.data.premium), left: result.data.left };
+      renderQuota();
+      return { ok: true };
+    }).catch(function () {
+      return localAllow(invoiceId);
+    });
+  }
+
+  function buildPdf(model, totals) {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      toast('No se ha cargado la librería del PDF. Revisa la conexión.');
+      return false;
+    }
+    var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+    var left = 16;
+    var right = 194;
+    doc.setFillColor(30, 58, 95);
+    doc.rect(0, 0, 210, 28, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('FACTURA', left, 18);
+    doc.setFontSize(12);
+    doc.text(model.number, right, 13, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(formatDate(model.date), right, 20, { align: 'right' });
+
+    doc.setTextColor(28, 36, 48);
+    var y = 40;
+    doc.setFont('helvetica', 'bold');
+    doc.text(model.issuer.name, left, y);
+    doc.setFont('helvetica', 'normal');
+    y = writeBlock(doc, issuerBlock(model.issuer), left, y + 6, 90);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Cliente', 120, 40);
+    doc.setFont('helvetica', 'normal');
+    writeBlock(doc, clientBlock(model.client), 120, 46, 74);
+    y = Math.max(y, 70) + 8;
+
+    doc.setFillColor(244, 241, 234);
+    doc.rect(left, y, right - left, 8, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.text('Concepto', left + 2, y + 5.5);
+    doc.text('Cant.', 118, y + 5.5, { align: 'right' });
+    doc.text('Precio', 150, y + 5.5, { align: 'right' });
+    doc.text('Importe', right, y + 5.5, { align: 'right' });
+    y += 12;
+    doc.setFont('helvetica', 'normal');
+    totals.lines.forEach(function (line) {
+      var wrapped = doc.splitTextToSize(line.concept, 88);
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.text(wrapped, left, y);
+      doc.text(String(line.qty), 118, y, { align: 'right' });
+      doc.text(money(line.price), 150, y, { align: 'right' });
+      doc.text(money(line.amount), right, y, { align: 'right' });
+      y += Math.max(6, wrapped.length * 5);
+    });
+
+    y += 4;
+    y = totalRow(doc, 'Base imponible', money(totals.base), y, right);
+    y = totalRow(doc, 'IVA ' + Math.round(totals.ivaRate * 100) + ' %', money(totals.iva), y, right);
+    if (totals.irpfRate > 0) y = totalRow(doc, 'IRPF ' + Math.round(totals.irpfRate * 100) + ' %', '- ' + money(totals.irpf), y, right);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    y = totalRow(doc, 'Total', money(totals.total), y + 1, right);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    if (model.issuer.iban) {
+      y += 8;
+      doc.text('IBAN: ' + model.issuer.iban, left, y);
+    }
+    if (model.notes) {
+      y += 8;
+      var notes = doc.splitTextToSize(model.notes, right - left);
+      doc.text(notes, left, y);
+    }
+    doc.setFontSize(8);
+    doc.setTextColor(90, 98, 110);
+    doc.text('Borrador generado con FacturaPro. No es un sistema de facturación certificado. Revisa los datos antes de enviarlo.', left, 288);
+    doc.save(model.number + '.pdf');
+    return true;
+  }
+
+  function issuerBlock(issuer) {
+    return [issuer.nif, issuer.address, issuer.email, issuer.phone].filter(Boolean).join('\n');
+  }
+  function clientBlock(client) {
+    return [client.name, client.nif, client.address].filter(Boolean).join('\n');
+  }
+  function writeBlock(doc, text, x, y, width) {
+    if (!text) return y;
+    var lines = doc.splitTextToSize(text, width);
+    doc.text(lines, x, y);
+    return y + lines.length * 5;
+  }
+  function totalRow(doc, label, value, y, right) {
+    doc.text(label, 120, y);
+    doc.text(value, right, y, { align: 'right' });
+    return y + 6;
+  }
+  function formatDate(value) {
+    var parts = String(value || '').split('-');
+    if (parts.length !== 3) return value;
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+
+  function remember(model, totals) {
+    var items = [];
+    try { items = JSON.parse(localStorage.getItem('facturapro.history') || '[]'); } catch (err) {}
+    items = [{
+      number: model.number,
+      date: model.date,
+      iva: model.iva,
+      irpf: model.irpf,
+      notes: model.notes,
+      client: model.client,
+      lines: totals.lines,
+      total: totals.total
+    }].concat(items.filter(function (item) { return item.number !== model.number; })).slice(0, 20);
+    localStorage.setItem('facturapro.history', JSON.stringify(items));
+    renderHistory();
+  }
+
+  function openPaywall() {
+    var modal = document.getElementById('modal');
+    modal.innerHTML = '<div class="sheet"><h2>Facturas ilimitadas</h2><p>Un pago de ' + euros(price) + '. Sin cuota mensual. El PDF sigue haciéndose en tu navegador.</p><label class="check"><input id="pay-terms" type="checkbox"> Quiero el acceso en cuanto pague y acepto que, al recibirlo, no aplica el derecho de desistimiento de 14 días.</label><label>Email del recibo<input id="pay-email" type="email" autocomplete="email"></label><button type="button" class="primary" id="pay-go">Pagar ' + euros(price) + '</button><button type="button" class="ghost" id="pay-close">Ahora no</button></div>';
+    modal.hidden = false;
+    document.getElementById('pay-close').addEventListener('click', closePay);
+    document.getElementById('pay-go').addEventListener('click', function () {
+      var terms = document.getElementById('pay-terms').checked;
+      var email = document.getElementById('pay-email').value.trim();
+      if (!terms) { toast('Marca la casilla para continuar'); return; }
+      if (!stripeReady) { toast('Stripe aún no está configurado'); return; }
+      fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId: device, email: email, acceptTerms: true })
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      }).then(function (result) {
+        if (!result.ok) { toast(result.data.error || 'No se ha podido abrir el pago'); return; }
+        location.href = result.data.url;
+      }).catch(function () { toast('Sin conexión con el servidor'); });
+    });
+  }
+  function closePay() {
+    var modal = document.getElementById('modal');
+    modal.hidden = true;
+    modal.innerHTML = '';
+  }
+
+  document.getElementById('form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var model = collect();
+    var totals = window.FacturaCalc.calcInvoice(model.lines, model.iva, model.irpf);
+    var error = validate(model, totals);
+    if (error) { toast(error); return; }
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      toast('No se ha cargado la librería del PDF. Revisa la conexión y vuelve a intentarlo.');
+      return;
+    }
+    var button = document.getElementById('download');
+    button.disabled = true;
+    checkQuota(model.number).then(function (result) {
+      if (!result.ok) { openPaywall(); return; }
+      if (buildPdf(model, totals)) {
+        commitNumber(model.number);
+        remember(model, totals);
+        saveIssuer();
+        renderQuota();
+        toast('PDF descargado');
+      }
+    }).finally(function () { button.disabled = false; });
+  });
+
+  document.getElementById('form').addEventListener('input', function (event) {
+    if (event.target.closest('#lines')) syncLinesFromDom();
+    if (event.target.id && event.target.id.indexOf('issuer-') === 0) saveIssuer();
+    renderPreview();
+  });
+
+  document.getElementById('lines').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-remove]');
+    if (!button) return;
+    syncLinesFromDom();
+    if (lines.length === 1) {
+      lines = [{ concept: '', qty: 1, price: '' }];
+    } else {
+      lines.splice(Number(button.dataset.remove), 1);
+    }
+    renderLines();
+    renderPreview();
+  });
+
+  document.getElementById('add-line').addEventListener('click', function () {
+    syncLinesFromDom();
+    if (lines.length >= 8) { toast('Máximo 8 conceptos'); return; }
+    lines.push({ concept: '', qty: 1, price: '' });
+    renderLines();
+  });
+
+  document.getElementById('fresh').addEventListener('click', function () {
+    fill({
+      client: {},
+      number: peekNumber(),
+      date: todayISO(),
+      iva: Number(val('iva')),
+      irpf: Number(val('irpf')),
+      notes: '',
+      lines: [{ concept: '', qty: 1, price: '' }]
+    });
+  });
+
+  document.getElementById('history').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-history]');
+    if (!button) return;
+    var items = JSON.parse(localStorage.getItem('facturapro.history') || '[]');
+    var item = items[Number(button.dataset.history)];
+    if (!item) return;
+    fill(item);
+  });
+
+  document.getElementById('modal').addEventListener('click', function (event) {
+    if (event.target.id === 'modal') closePay();
+  });
+
+  document.getElementById('restore').addEventListener('submit', function (event) {
+    event.preventDefault();
+    fetch('/api/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: document.getElementById('restore-email').value.trim(), deviceId: device })
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+    }).then(function (result) {
+      if (!result.ok || !result.data.token) { toast(result.data.error || 'No se ha encontrado el pago'); return; }
+      localStorage.setItem('facturapro.pro', result.data.token);
+      renderQuota();
+      toast('Compra recuperada en este navegador');
+    }).catch(function () { toast('Sin conexión con el servidor'); });
+  });
+
+  function confirmReturn() {
+    var params = new URLSearchParams(location.search);
+    if (params.get('pago') === 'cancelado') toast('Pago cancelado. No se ha cobrado.');
+    var sessionId = params.get('session_id');
+    if (params.get('pago') === 'ok' && sessionId) {
+      fetch('/api/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sessionId, deviceId: device })
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      }).then(function (result) {
+        if (!result.ok || !result.data.token) { toast(result.data.error || 'El pago no se ha activado'); return; }
+        localStorage.setItem('facturapro.pro', result.data.token);
+        renderQuota();
+        toast('Ya puedes descargar sin límite');
+      }).catch(function () { toast('No se ha podido confirmar el pago'); });
+    }
+    if (params.get('pago') || sessionId) history.replaceState({}, '', location.pathname);
+  }
+
+  var contact = window.FACTURA_CONFIG && window.FACTURA_CONFIG.contactEmail;
+  if (contact) document.getElementById('contact').textContent = 'Contacto: ' + contact;
+
+  loadIssuer();
+  fill({
+    client: {},
+    number: peekNumber(),
+    date: todayISO(),
+    iva: 0.21,
+    irpf: 0,
+    notes: '',
+    lines: [{ concept: 'Servicios profesionales', qty: 1, price: '' }]
+  });
+  renderHistory();
+  renderQuota();
+  confirmReturn();
+  fetch('/api/checkout').then(function (res) { return res.json(); }).then(function (data) {
+    stripeReady = Boolean(data && data.stripe);
+    if (data && data.product && data.product.amount) price = data.product.amount;
+    if (data && data.freePerMonth) FREE = data.freePerMonth;
+    renderQuota();
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>

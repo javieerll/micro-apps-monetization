@@ -1,0 +1,8 @@
+{
+  "name": "streakmaster",
+  "private": true,
+  "description": "Telegram Mini App de hábitos con rachas, monedas, anuncios y Telegram Stars.",
+  "engines": {
+    "node": "20.x"
+  }
+}
