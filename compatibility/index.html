@@ -64,7 +64,7 @@
 // ===== Ajustes =====
 const MARCA = "TRASNIA";
 const PRICE = "2,99 €";
-const CHECKOUT_URL = "https://buy.stripe.com/placeholder"; // cambia por tu enlace real de Stripe
+const CHECKOUT_URL = "https://buy.stripe.com/test_fZu14f8mKb2uaED2rYgIo00"; // enlace de Stripe (modo prueba). En real: cambia por el enlace live
 const PREMIUM_TOKEN = "alma-premium";                       // ?premium=alma-premium activa premium (para la página de "gracias")
 const SEMILLA = "trasnia-14";                                // con esta semilla María + Pablo = 92 %
 
@@ -151,7 +151,7 @@ function premium() {
   if (CHECKOUT_URL.includes("placeholder")) {
     if (confirm("Modo prueba: ¿activar Premium en este navegador?")) activarPremium();
   } else {
-    window.open(CHECKOUT_URL, "_blank");
+    location.href = CHECKOUT_URL;
   }
 }
 
@@ -179,6 +179,7 @@ function compartirWA() {
 }
 
 // ===== Inicio =====
+if (esPremium()) { guardar("premium", "1"); }
 $("watermark").textContent = "Powered by " + MARCA;
 $("premiumBtn").textContent = "Desbloquear por " + PRICE;
 ["name1", "name2"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") calcular(); }));
