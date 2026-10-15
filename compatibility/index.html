@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compatibilidad de Nombres — TRASNIA</title>
+<meta name="description" content="Descubre qué tan compatibles sois con solo escribir vuestros nombres.">
+<meta property="og:title" content="Compatibilidad de Nombres">
+<meta property="og:description" content="¿Destinados o mejor como amigos? Pruébalo gratis.">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background: #0f0f13; color: #fff; margin: 0; padding: 16px; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #1a1a24; border-radius: 20px; padding: 28px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+  h1 { margin: 0 0 10px; font-size: 1.6rem; }
+  .inputs { display: flex; gap: 10px; margin: 20px 0; }
+  input { flex: 1 1 0; min-width: 0; width: 100%; padding: 12px; border-radius: 12px; border: none; background: #2a2a38; color: #fff; font-size: 1rem; }
+  button { background: #7c3aed; color: #fff; border: none; padding: 14px 20px; border-radius: 12px; font-size: 1rem; cursor: pointer; width: 100%; margin-top: 10px; }
+  button:hover { background: #6d28d9; }
+  .result { display: none; margin-top: 25px; }
+  .percent { font-size: 4rem; font-weight: 800; color: #a78bfa; margin: 10px 0; }
+  .label { font-size: 1.4rem; margin-bottom: 10px; }
+  .phrases { text-align: left; margin: 15px 0; font-size: 0.95rem; line-height: 1.5; }
+  .extra { display: none; text-align: left; margin: 15px 0; padding: 12px; border-radius: 12px; background: #241d3a; font-size: 0.95rem; line-height: 1.5; }
+  .share { display: flex; gap: 8px; margin-top: 15px; }
+  .share button { flex: 1; background: #2a2a38; margin-top: 0; padding: 12px 8px; }
+  .premium { margin-top: 20px; padding: 15px; background: #2a2a38; border-radius: 12px; }
+  .watermark { opacity: 0.5; font-size: 0.8rem; margin-top: 20px; }
+  .ad { margin-top: 15px; padding: 10px; background: #222; border-radius: 8px; font-size: 0.85rem; }
+  @media (max-width: 380px) { .inputs { flex-direction: column; } .card { padding: 20px; } }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Compatibilidad de Nombres</h1>
+  <p>Descubre qué tan compatibles sois</p>
+
+  <div class="inputs">
+    <input id="name1" placeholder="Nombre 1" autocomplete="off" maxlength="40">
+    <input id="name2" placeholder="Nombre 2" autocomplete="off" maxlength="40">
+  </div>
+  <button onclick="calcular()">Calcular Compatibilidad</button>
+
+  <div class="result" id="result">
+    <div class="percent" id="percent"></div>
+    <div class="label" id="label"></div>
+    <div class="phrases" id="phrases"></div>
+    <div class="extra" id="extra"></div>
+    <div class="share">
+      <button onclick="copiar()">Copiar</button>
+      <button onclick="compartirX()">X</button>
+      <button onclick="compartirWA()">WhatsApp</button>
+    </div>
+    <div class="premium" id="premiumBox">
+      <strong>Desbloquear análisis profundo (Premium)</strong><br>
+      <small>Quita la marca, el anuncio y muestra 3 lecturas extra</small>
+      <button onclick="premium()" id="premiumBtn">Desbloquear</button>
+    </div>
+    <div class="ad" id="ad">Publicidad</div>
+    <div class="watermark" id="watermark">Powered by TRASNIA</div>
+  </div>
+</div>
+
+<script>
+// ===== Ajustes =====
+const MARCA = "TRASNIA";
+const PRICE = "2,99 €";
+const CHECKOUT_URL = "https://buy.stripe.com/placeholder"; // cambia por tu enlace real de Stripe
+const PREMIUM_TOKEN = "alma-premium";                       // ?premium=alma-premium activa premium (para la página de "gracias")
+const SEMILLA = "trasnia-14";                                // con esta semilla María + Pablo = 92 %
+
+// ===== Utilidades =====
+function guardar(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function cargar(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function $(id) { return document.getElementById(id); }
+
+function normalizar(s) {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zñ]/g, "");
+}
+
+// Hash FNV-1a: el mismo par de nombres da siempre el mismo resultado
+function hash(str) {
+  let h = 2166136261;
+  for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+// Da igual el orden (María + Pablo = Pablo + María). Rango 20–100 %.
+function calcularCompatibilidad(a, b) {
+  const clave = [normalizar(a), normalizar(b)].sort().join("|") + SEMILLA;
+  return 20 + (hash(clave) % 81);
+}
+
+function leer(p) {
+  if (p <= 30) return "Mejor como amigos";
+  if (p <= 60) return "Hay química";
+  if (p <= 80) return "Almas gemelas potenciales";
+  return "Destinados";
+}
+
+function frases(p) {
+  if (p > 80) return ["La energía entre vosotros es especial.", "Hay detalles que solo vosotros notáis.", "El destino parece haber intervenido."];
+  if (p > 60) return ["Hay una conexión fuerte.", "Podéis crecer mucho juntos.", "La química está presente."];
+  if (p > 30) return ["Hay atracción.", "Con tiempo puede funcionar.", "No descartéis la posibilidad."];
+  return ["Mejor mantener la amistad.", "La conexión es ligera.", "Disfrutad del momento sin presión."];
+}
+
+// Lecturas extra de Premium (elegidas según los nombres, siempre las mismas para cada pareja)
+const EXTRAS = {
+  amor: ["Os enamoráis despacio, pero de verdad.", "La pasión aparece cuando menos lo esperáis.", "Vuestro punto fuerte es la complicidad.", "Os entendéis sin necesidad de hablar."],
+  conflicto: ["Discutiréis por tonterías, pero os reconciliaréis rápido.", "El orgullo es vuestro mayor reto.", "Uno planifica y el otro improvisa: equilibrio perfecto.", "Aprended a ceder y seréis imparables."],
+  futuro: ["Un viaje juntos lo cambiará todo.", "Lo mejor está por llegar.", "Construiréis algo bonito si tenéis paciencia.", "El momento es ahora: no lo dejéis pasar."]
+};
+function lecturasExtra(n1, n2) {
+  const h = hash([normalizar(n1), normalizar(n2)].sort().join("|") + "extra");
+  return [
+    "💞 Amor: " + EXTRAS.amor[h % 4],
+    "⚡ Conflicto: " + EXTRAS.conflicto[(h >>> 4) % 4],
+    "🔮 Futuro: " + EXTRAS.futuro[(h >>> 8) % 4]
+  ];
+}
+
+// ===== Lógica principal =====
+function esPremium() {
+  return new URLSearchParams(location.search).get("premium") === PREMIUM_TOKEN || cargar("premium") === "1";
+}
+
+function calcular() {
+  const n1 = $("name1").value.trim();
+  const n2 = $("name2").value.trim();
+  if (!normalizar(n1) || !normalizar(n2)) { alert("Escribe los dos nombres"); return; }
+
+  const p = calcularCompatibilidad(n1, n2);
+  $("percent").textContent = p + " %";
+  $("label").textContent = leer(p);
+  $("phrases").innerHTML = frases(p).map(f => "• " + f).join("<br>");
+  $("extra").innerHTML = lecturasExtra(n1, n2).join("<br>");
+  $("result").style.display = "block";
+
+  if (esPremium()) activarPremium();
+}
+
+function activarPremium() {
+  $("watermark").style.display = "none";
+  $("ad").style.display = "none";
+  $("premiumBox").style.display = "none";
+  $("extra").style.display = "block";
+  guardar("premium", "1");
+}
+
+function premium() {
+  if (CHECKOUT_URL.includes("placeholder")) {
+    if (confirm("Modo prueba: ¿activar Premium en este navegador?")) activarPremium();
+  } else {
+    window.open(CHECKOUT_URL, "_blank");
+  }
+}
+
+// ===== Compartir (incluye el enlace para que se haga viral) =====
+function textoCompartir() {
+  return $("name1").value.trim() + " y " + $("name2").value.trim() + " tienen un " + $("percent").textContent +
+         " de compatibilidad: " + $("label").textContent + ". Prueba con vosotros 👉 " + location.origin;
+}
+
+function copiar() {
+  const t = textoCompartir();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(() => alert("Copiado"), () => prompt("Copia el texto:", t));
+  } else {
+    prompt("Copia el texto:", t);
+  }
+}
+
+function compartirX() {
+  window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(textoCompartir()), "_blank");
+}
+
+function compartirWA() {
+  window.open("https://wa.me/?text=" + encodeURIComponent(textoCompartir()), "_blank");
+}
+
+// ===== Inicio =====
+$("watermark").textContent = "Powered by " + MARCA;
+$("premiumBtn").textContent = "Desbloquear por " + PRICE;
+["name1", "name2"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") calcular(); }));
+</script>
+</body>
+</html>
