@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compatibilidad de Nombres — TRASNIA</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background: #0f0f13; color: #fff; margin: 0; padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #1a1a24; border-radius: 20px; padding: 30px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+  h1 { margin: 0 0 10px; font-size: 1.6rem; }
+  .inputs { display: flex; gap: 10px; margin: 20px 0; }
+  input { flex: 1; padding: 12px; border-radius: 12px; border: none; background: #2a2a38; color: #fff; font-size: 1rem; }
+  button { background: #7c3aed; color: #fff; border: none; padding: 14px 20px; border-radius: 12px; font-size: 1rem; cursor: pointer; width: 100%; margin-top: 10px; }
+  button:hover { background: #6d28d9; }
+  .result { display: none; margin-top: 25px; }
+  .percent { font-size: 4rem; font-weight: 800; color: #a78bfa; margin: 10px 0; }
+  .label { font-size: 1.4rem; margin-bottom: 10px; }
+  .phrases { text-align: left; margin: 15px 0; font-size: 0.95rem; line-height: 1.5; }
+  .share { display: flex; gap: 8px; margin-top: 15px; }
+  .share button { flex: 1; background: #2a2a38; }
+  .premium { margin-top: 20px; padding: 15px; background: #2a2a38; border-radius: 12px; }
+  .watermark { opacity: 0.5; font-size: 0.8rem; margin-top: 20px; }
+  .ad { margin-top: 15px; padding: 10px; background: #222; border-radius: 8px; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Compatibilidad de Nombres</h1>
+  <p>Descubre qué tan compatibles sois</p>
+
+  <div class="inputs">
+    <input id="name1" placeholder="Nombre 1" autocomplete="off">
+    <input id="name2" placeholder="Nombre 2" autocomplete="off">
+  </div>
+  <button onclick="calcular()">Calcular Compatibilidad</button>
+
+  <div class="result" id="result">
+    <div class="percent" id="percent"></div>
+    <div class="label" id="label"></div>
+    <div class="phrases" id="phrases"></div>
+    <div class="share">
+      <button onclick="copiar()">Copiar</button>
+      <button onclick="compartirX()">X</button>
+      <button onclick="compartirWA()">WhatsApp</button>
+    </div>
+    <div class="premium" id="premiumBox">
+      <strong>Desbloquear análisis profundo (Premium)</strong><br>
+      <small>Quita la marca, el anuncio y muestra 3 lecturas extra</small>
+      <button onclick="premium()">Desbloquear por 2,99 €</button>
+    </div>
+    <div class="ad" id="ad">Publicidad</div>
+    <div class="watermark" id="watermark">Powered by TRASNIA</div>
+  </div>
+</div>
+
+<script>
+// Ajustes
+const MARCA = "TRASNIA";
+const PRICE = "2,99 €";
+const CHECKOUT_URL = "https://buy.stripe.com/placeholder"; // cambia por tu enlace real
+const PREMIUM_TOKEN = "alma-premium";
+const WAITLIST_ENDPOINT = ""; // opcional
+
+function normalizar(s) {
+  return s.toLowerCase().replace(/\s+/g, "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function calcularCompatibilidad(a, b) {
+  const s = normalizar(a) + normalizar(b);
+  let sum = 0;
+  for (let c of s) sum += c.charCodeAt(0);
+  return sum % 101;
+}
+
+function leer(p) {
+  if (p <= 30) return "Mejor como amigos";
+  if (p <= 60) return "Hay química";
+  if (p <= 80) return "Almas gemelas potenciales";
+  return "Destinados";
+}
+
+function frases(p) {
+  const base = [
+    "La energía entre vosotros es especial.",
+    "Hay detalles que solo vosotros notáis.",
+    "El destino parece haber intervenido."
+  ];
+  if (p > 80) return base;
+  if (p > 60) return ["Hay una conexión fuerte.", "Podéis crecer mucho juntos.", "La química está presente."];
+  if (p > 30) return ["Hay atracción.", "Con tiempo puede funcionar.", "No descartéis la posibilidad."];
+  return ["Mejor mantener la amistad.", "La conexión es ligera.", "Disfrutad del momento sin presión."];
+}
+
+function calcular() {
+  const n1 = document.getElementById("name1").value.trim();
+  const n2 = document.getElementById("name2").value.trim();
+  if (!n1 || !n2) { alert("Escribe los dos nombres"); return; }
+
+  const p = calcularCompatibilidad(n1, n2);
+  const label = leer(p);
+  const fr = frases(p);
+
+  document.getElementById("percent").textContent = p + " %";
+  document.getElementById("label").textContent = label;
+  document.getElementById("phrases").innerHTML = fr.map(f => "• " + f).join("<br>");
+  document.getElementById("result").style.display = "block";
+
+  // Premium de prueba
+  const params = new URLSearchParams(location.search);
+  if (params.get("premium") === PREMIUM_TOKEN || localStorage.getItem("premium") === "1") {
+    activarPremium();
+  }
+}
+
+function activarPremium() {
+  document.getElementById("watermark").style.display = "none";
+  document.getElementById("ad").style.display = "none";
+  document.getElementById("premiumBox").style.display = "none";
+  localStorage.setItem("premium", "1");
+}
+
+function premium() {
+  if (CHECKOUT_URL.includes("placeholder")) {
+    if (confirm("Modo prueba: ¿activar Premium en este navegador?")) {
+      activarPremium();
+    }
+  } else {
+    window.open(CHECKOUT_URL, "_blank");
+  }
+}
+
+function copiar() {
+  const text = document.getElementById("name1").value + " y " + document.getElementById("name2").value + " tienen un " + document.getElementById("percent").textContent + " de compatibilidad. " + document.getElementById("label").textContent;
+  navigator.clipboard.writeText(text);
+  alert("Copiado");
+}
+
+function compartirX() {
+  const text = encodeURIComponent(document.getElementById("name1").value + " y " + document.getElementById("name2").value + " son " + document.getElementById("label").textContent + " (" + document.getElementById("percent").textContent + ")");
+  window.open("https://twitter.com/intent/tweet?text=" + text, "_blank");
+}
+
+function compartirWA() {
+  const text = encodeURIComponent(document.getElementById("name1").value + " y " + document.getElementById("name2").value + " tienen " + document.getElementById("percent").textContent + " de compatibilidad. " + document.getElementById("label").textContent);
+  window.open("https://wa.me/?text=" + text, "_blank");
+}
+
+// Marca
+document.getElementById("watermark").textContent = "Powered by " + MARCA;
+</script>
+</body>
+</html>
